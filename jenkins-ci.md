@@ -43,6 +43,7 @@ sudo apt install default-jre -y
 java -version
 wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-25.5.0.107428.zip
 mv sonarqube-25.5.0.107428.zip sonarqube.zip
+apt install unzip -y
 unzip sonarqube.zip
 mv sonarqube-25.5.0.107428/ sonarqube
 ```
