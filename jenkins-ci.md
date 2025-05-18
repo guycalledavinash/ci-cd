@@ -35,8 +35,8 @@ sudo apt install docker.io -y
 ```
 sudo su - 
 usermod -aG docker ubuntu
-systemctl restart docker
 usermod -aG docker jenkins
+systemctl restart docker
 ```
 
 ### Sonarqube
