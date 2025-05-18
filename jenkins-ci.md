@@ -20,6 +20,12 @@ sudo apt-get install jenkins -y
 ```
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
+### Maven
+
+```
+sudo apt install maven -y
+```
+
 ### Docker Slave Configuration
 ```
 sudo apt update
