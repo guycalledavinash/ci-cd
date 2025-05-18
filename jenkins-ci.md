@@ -28,9 +28,9 @@ sudo apt install docker.io -y
 
 ```
 sudo su - 
-usermod -aG docker jenkins
 usermod -aG docker ubuntu
 systemctl restart docker
+usermod -aG docker jenkins
 ```
 
 ### Sonarqube
@@ -39,7 +39,7 @@ systemctl restart docker
 sudo apt update
 sudo su
 cd /opt
-sudo apt install default-jre
+sudo apt install default-jre -y
 java -version
 wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-25.5.0.107428.zip
 mv sonarqube-25.5.0.107428.zip sonarqube.zip
