@@ -79,3 +79,20 @@ sh sonar.sh status
 It runs on port 9000
 
 The default port of sonar serve can be changed at ( conf/sonar.properties) like `sonar.web.port=6000`
+
+## Implementation
+
+[Project repo](https://github.com/guycalledavinash/java-sample-mvp/tree/main/java-maven-sonar-argocd-helm-k8s/spring-boot-app)
+
+#### Issues Faced
+### 1. Permission Denied for Docker Socket
+
+Error: `permission denied while trying to connect to the Docker daemon socket...`
+
+Cause: The Jenkins user was not a member of the docker group, which is preventing its access to the Docker socket
+
+Solved it by adding Jenkins user to the Docker group, restarting Docker and jenkins
+
+### 2. Base Image Not Found in Dockerfile
+
+The base image I was using `adoptopenjdk:17-jdk-alpine` was no longer available, hence I used a relevant image `eclipse-temurin`
