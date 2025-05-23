@@ -82,7 +82,7 @@ The default port of sonar serve can be changed at ( conf/sonar.properties) like 
 
 ## Implementation
 
-[Project repo](https://github.com/guycalledavinash/java-sample-mvp/tree/main/java-maven-sonar-argocd-helm-k8s/spring-boot-app)
+![image](https://github.com/user-attachments/assets/ecb91aeb-5ead-4995-9cbf-079ab2721347)
 
 #### Issues Faced
 ### 1. Permission Denied for Docker Socket
