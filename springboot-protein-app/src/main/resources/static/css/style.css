@@ -1,0 +1,67 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #fff;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    background: #e6f5d0;
+    padding: 1rem 2rem;
+    align-items: center;
+}
+
+.navbar .logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.navbar nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #000;
+}
+
+.hero {
+    background: #ffffff;
+    text-align: center;
+    padding: 3rem 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.shop-btn {
+    margin-top: 1rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.products {
+    display: flex;
+    justify-content: center;
+    background: #204020;
+    padding: 3rem;
+    gap: 2rem;
+}
+
+.pouch {
+    width: 150px;
+    height: 250px;
+    background-color: #f7c6d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 10px;
+    font-size: 1rem;
+}
+
+.pouch.teal { color: #256d7b; }
+.pouch.yellow { color: #c2a400; }
+.pouch.maroon { color: #730044; }
