@@ -33,7 +33,7 @@ sudo apt install docker.io -y
 ```
 
 ```
-sudo su - 
+sudo su
 usermod -aG docker ubuntu
 usermod -aG docker jenkins
 systemctl restart docker
