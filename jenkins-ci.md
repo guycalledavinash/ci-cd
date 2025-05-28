@@ -96,3 +96,57 @@ Solved it by adding Jenkins user to the Docker group, restarting Docker and jenk
 ### 2. Base Image Not Found in Dockerfile
 
 The base image I was using `adoptopenjdk:17-jdk-alpine` was no longer available, hence I used a relevant image `eclipse-temurin`
+
+#### Automation script
+```
+#!/bin/bash
+
+# Exit on any error
+set -e
+
+# Update system
+sudo apt update
+
+# --- Install Java (required for Jenkins and SonarQube) ---
+sudo apt install openjdk-17-jre default-jre -y
+
+# --- Install Jenkins ---
+curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update
+sudo apt-get install jenkins -y
+
+# --- Install Maven ---
+sudo apt install maven -y
+
+# --- Install Docker ---
+sudo apt install docker.io -y
+sudo usermod -aG docker ubuntu
+sudo usermod -aG docker jenkins
+sudo systemctl restart docker
+
+# --- Install SonarQube ---
+cd /opt
+sudo wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-25.5.0.107428.zip
+sudo apt install unzip -y
+sudo unzip sonarqube-25.5.0.107428.zip
+sudo mv sonarqube-25.5.0.107428 sonarqube
+
+# --- Setup Sonar User ---
+sudo useradd sonar || true  # ignore if exists
+echo "sonar ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+
+# --- Permissions ---
+sudo chown -R sonar:sonar /opt/sonarqube
+sudo chmod -R 775 /opt/sonarqube
+
+# --- Start SonarQube as sonar user ---
+sudo -u sonar /opt/sonarqube/bin/linux-x86-64/sonar.sh start
+
+# --- Display Jenkins initial password ---
+echo "Jenkins Initial Admin Password:"
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+echo "Setup Completed Successfully!"
+```
+
