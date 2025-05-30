@@ -1,5 +1,6 @@
 pipeline {
   agent any
+
   environment {
     SONAR_URL = credentials('sonar-url')
     DOCKER_IMAGE = "guycalledavinash/spring-protein-app:${BUILD_NUMBER}"
@@ -29,9 +30,9 @@ pipeline {
         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
             mvn sonar:sonar \
-            -f springboot-protein-app/pom.xml \
-            -Dsonar.login=$SONAR_AUTH_TOKEN \
-            -Dsonar.host.url=$SONAR_URL
+              -f springboot-protein-app/pom.xml \
+              -Dsonar.login=$SONAR_AUTH_TOKEN \
+              -Dsonar.host.url=$SONAR_URL
           '''
         }
       }
@@ -43,13 +44,31 @@ pipeline {
         withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
           sh '''
             cd springboot-protein-app/
-
-            # Build Docker image
-            docker build -t ${DOCKER_IMAGE} -f Dockerfile .
-
-            # Push Docker image
+            docker build -t $DOCKER_IMAGE .
             echo $PASSWORD | docker login -u $USERNAME --password-stdin
-            docker push ${DOCKER_IMAGE}
+            docker push $DOCKER_IMAGE
+          '''
+        }
+      }
+    }
+
+    stage('Update Deployment File') {
+      environment {
+        GIT_REPO_NAME = "ci-cd"
+        GIT_USER_NAME = "guycalledavinash"
+      }
+      steps {
+        withCredentials([string(credentialsId: 'github', variable: 'github-token')]) {
+          sh '''
+            git config user.email "cavinashreddy97@gmail.com"
+            git config user.name "Avinash Reddy"
+
+            # Replace image tag in deployment.yaml
+            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" springboot-protein-app-manifests/deployment.yaml
+
+            git add springboot-protein-app-manifests/deployment.yaml
+            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
           '''
         }
       }
@@ -61,10 +80,10 @@ pipeline {
       echo 'Pipeline execution complete.'
     }
     success {
-      echo 'Pipeline executed successfully.'
+      echo '✅ CI/CD pipeline completed successfully.'
     }
     failure {
-      echo 'Pipeline execution failed.'
+      echo '❌ CI/CD pipeline failed.'
     }
   }
 }
