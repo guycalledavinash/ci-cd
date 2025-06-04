@@ -1,0 +1,72 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  SONAR_URL: ${{ secrets.SONAR_URL }}
+  DOCKER_IMAGE: guycalledavinash/spring-protein-app:${{ github.run_number }}
+
+jobs:
+  build-test-analyze-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven
+
+    - name: Build and run tests
+      run: mvn clean package -f springboot-protein-app/pom.xml
+
+    - name: SonarQube Scan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        mvn sonar:sonar \
+          -f springboot-protein-app/pom.xml \
+          -Dsonar.login=$SONAR_TOKEN \
+          -Dsonar.host.url=$SONAR_URL
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        cd springboot-protein-app
+        docker build -t $DOCKER_IMAGE .
+        docker push $DOCKER_IMAGE
+
+    - name: Update Kubernetes deployment YAML with new image tag
+      run: |
+        sed -i "s/replaceImageTag/${{ github.run_number }}/g" springboot-protein-app-manifests/deployment.yaml
+
+    - name: Commit updated deployment.yaml
+      run: |
+        git config user.name "Avinash Reddy"
+        git config user.email "cavinashreddy97@gmail.com"
+        git add springboot-protein-app-manifests/deployment.yaml
+        git commit -m "Update deployment image to version ${{ github.run_number }}"
+        git push https://${{ secrets.GITHUB_TOKEN }}@github.com/guycalledavinash/ci-cd HEAD:main
