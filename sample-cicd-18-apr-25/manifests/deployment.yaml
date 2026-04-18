@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamic-website
+  namespace: dynamic-web
+  labels:
+    app: dynamic-website
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dynamic-website
+  template:
+    metadata:
+      labels:
+        app: dynamic-website
+    spec:
+      containers:
+        - name: dynamic-website
+          image: ghcr.io/OWNER/REPO/dynamic-website:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
