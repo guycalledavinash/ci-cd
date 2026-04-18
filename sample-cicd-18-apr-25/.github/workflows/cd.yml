@@ -1,0 +1,51 @@
+name: CD - Dynamic Website
+
+on:
+  workflow_run:
+    workflows: ["CI - Dynamic Website"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: sample-cicd-18-apr-25/app
+          file: sample-cicd-18-apr-25/app/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/dynamic-website:${{ github.event.workflow_run.head_sha }}
+
+      - name: Set kubectl context
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Update deployment image and deploy
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}/dynamic-website:${{ github.event.workflow_run.head_sha }}
+          sed -i "s|ghcr.io/OWNER/REPO/dynamic-website:latest|$IMAGE|g" sample-cicd-18-apr-25/manifests/deployment.yaml
+          kubectl apply -f sample-cicd-18-apr-25/manifests/namespace.yaml
+          kubectl apply -f sample-cicd-18-apr-25/manifests/deployment.yaml
+          kubectl apply -f sample-cicd-18-apr-25/manifests/service.yaml
+          kubectl apply -f sample-cicd-18-apr-25/manifests/ingress.yaml
+          kubectl -n dynamic-web rollout status deployment/dynamic-website --timeout=120s

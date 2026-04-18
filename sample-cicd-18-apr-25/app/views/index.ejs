@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Website CI/CD Sample</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1><%= greeting %></h1>
+      <p>This page is rendered dynamically by Express + EJS.</p>
+      <ul>
+        <li><strong>Rendered at:</strong> <%= timestamp %></li>
+        <li><strong>Pod/Host:</strong> <%= podName %></li>
+      </ul>
+      <p>Try <code>?user=YourName</code> in the URL.</p>
+    </main>
+  </body>
+</html>

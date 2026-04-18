@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dynamic-website
+  namespace: dynamic-web
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: dynamic.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dynamic-website
+                port:
+                  number: 80
