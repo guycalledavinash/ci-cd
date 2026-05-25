@@ -1,7 +1,12 @@
 package com.tasktrackr.notificationservice;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class TaskTrackrNotificationserviceApplication {
+
     public static void main(String[] args) {
-        System.out.println("notification-service started...");
+        SpringApplication.run(TaskTrackrNotificationserviceApplication.class, args);
     }
 }

@@ -1,7 +1,12 @@
 package com.tasktrackr.projectservice;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class TaskTrackrProjectserviceApplication {
+
     public static void main(String[] args) {
-        System.out.println("project-service started...");
+        SpringApplication.run(TaskTrackrProjectserviceApplication.class, args);
     }
 }
