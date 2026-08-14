@@ -1,0 +1,138 @@
+name: calorie-app-cicd
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/calorie-app-cicd.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/calorie-app-cicd.yml"
+  workflow_dispatch:
+    inputs:
+      calorie_app_ref:
+        description: "Branch, tag, or SHA from guycalledavinash/calorie-tracking to build"
+        required: false
+        default: "main"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: calorie-app-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_REPOSITORY: guycalledavinash/calorie-tracking
+  APP_REF: ${{ github.event.inputs.calorie_app_ref || 'main' }}
+  NODE_VERSION: "22"
+  DATABASE_URL: "file:./dev.db"
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/calorie-tracking
+
+jobs:
+  validate:
+    name: Lint, typecheck, and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout CalorieLens application
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.APP_REPOSITORY }}
+          ref: ${{ env.APP_REF }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript checks
+        run: npm run typecheck
+
+      - name: Build Next.js app
+        run: npm run build
+
+  docker:
+    name: Build and publish container
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout CalorieLens application
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.APP_REPOSITORY }}
+          ref: ${{ env.APP_REF }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=sha,prefix=sha-
+
+      - name: Create CI Dockerfile
+        run: |
+          cat > Dockerfile.ci <<'DOCKERFILE'
+          FROM node:22-alpine AS deps
+          WORKDIR /app
+          COPY package*.json ./
+          RUN npm install
+
+          FROM node:22-alpine AS builder
+          WORKDIR /app
+          ENV NEXT_TELEMETRY_DISABLED=1
+          ENV DATABASE_URL=file:./dev.db
+          COPY --from=deps /app/node_modules ./node_modules
+          COPY . .
+          RUN npm run prisma:generate
+          RUN npm run build
+
+          FROM node:22-alpine AS runner
+          WORKDIR /app
+          ENV NODE_ENV=production
+          ENV NEXT_TELEMETRY_DISABLED=1
+          ENV DATABASE_URL=file:./dev.db
+          COPY --from=builder /app ./
+          EXPOSE 3000
+          CMD ["npm", "run", "start"]
+          DOCKERFILE
+
+      - name: Build and publish image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.ci
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DATABASE_URL=${{ env.DATABASE_URL }}
