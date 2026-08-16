@@ -1,6 +1,6 @@
 # TaskTrackr - Microservices-Based Task Management Backend
 
-TaskTrackr is a Java 17 / Spring Boot 3 multi-module backend workspace for a Jira/Trello-style task management platform.
+TaskTrackr is a Java 17 / Spring Boot 4 multi-module backend workspace for a Jira/Trello-style task management platform.
 
 ## Current Status
 
